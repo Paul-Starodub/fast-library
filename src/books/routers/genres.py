@@ -17,6 +17,11 @@ async def get_genre(genre_id: int, db: Annotated[AsyncSession, Depends(get_db)])
     return await crud.crud_genre.get_genre(db=db, genre_id=genre_id)
 
 
+@router.get("/genres/{genre_id}/with_books/", response_model=schemas.GenreBook)
+async def get_genre_with_books(genre_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
+    return await crud.crud_genre.get_genre_with_books(db=db, genre_id=genre_id)
+
+
 @router.post("/", response_model=schemas.Genre, status_code=status.HTTP_201_CREATED)
 async def create_genre(genre_create: schemas.GenreCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     return await crud.crud_genre.create_genre(db=db, genre_create=genre_create)

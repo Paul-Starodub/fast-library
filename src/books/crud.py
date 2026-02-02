@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from src.books import models
 from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, BookUpdate
 
@@ -20,6 +20,19 @@ class GenreCRUD:
         if genre:
             return genre
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found")
+
+    @staticmethod
+    async def get_genre_with_books(db: AsyncSession, genre_id: int):
+        stmt = (
+            select(models.Genre)
+            .where(models.Genre.id == genre_id)
+            .options(selectinload(models.Genre.books).joinedload(models.Book.author))
+        )
+        result = await db.execute(stmt)
+        genre = result.scalars().first()
+        if genre:
+            return genre
+        raise HTTPException(status_code=404, detail="Genre not found")
 
     @staticmethod
     async def create_genre(db: AsyncSession, genre_create: GenreCreate):
