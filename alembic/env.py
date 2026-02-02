@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from src.books.models import Base
 from src.config import settings
+from src.books.models import *  # noqa
 from src.authors.models import *  # noqa
 
 # this is the Alembic Config object, which provides
