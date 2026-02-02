@@ -29,7 +29,7 @@ async def update_book(db: Annotated[AsyncSession, Depends(get_db)], book_id: int
 
 @router.patch("/{book_id}/", response_model=schemas.Book, status_code=status.HTTP_200_OK)
 async def update_book(db: Annotated[AsyncSession, Depends(get_db)], book_id: int, book_update: schemas.BookUpdate):
-    return await crud.crud_book.update_book(db, book_id, book_update)
+    return await crud.crud_book.update_book(db, book_id, book_update, partial=True)
 
 
 @router.delete("/{book_id}/", status_code=status.HTTP_204_NO_CONTENT)
