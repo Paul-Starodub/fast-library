@@ -14,7 +14,7 @@ class Genre(Base):
 
 
 class Book(UserRelationMixin, Base):
-    _user_back_populate = "genres"
+    _user_back_populate = "books"
     title: Mapped[str] = mapped_column(String(100), unique=True)
     rating: Mapped[int] = mapped_column(default=0)
     date_published: Mapped[datetime]

@@ -27,7 +27,7 @@ class Author(Base):
 
 class Profile(UserRelationMixin, Base):
     _user_id_unique = True  # for a one-to-one relationship
-    _user_back_populate = "author"
+    _user_back_populate = "profile"
     first_name: Mapped[str | None] = mapped_column(String(40))
     last_name: Mapped[str | None] = mapped_column(String(40))
     bio: Mapped[str | None]

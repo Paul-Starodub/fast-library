@@ -26,6 +26,7 @@ class BookBase(BaseModel):
     rating: Annotated[int, Field(ge=0, le=5)]
     date_published: Optional[datetime]
     image_file: str | None = Field(default=None, min_length=1, max_length=200)
+    genre_id: int = Field(..., ge=1)
 
 
 class BookCreate(BookBase):
@@ -41,5 +42,6 @@ class BookUpdate(BaseModel):
 
 class Book(BookBase):
     id: int
+    genre: Genre | None
 
     model_config = ConfigDict(from_attributes=True)
