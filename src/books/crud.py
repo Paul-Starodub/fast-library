@@ -9,7 +9,7 @@ from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, BookUpdate
 class GenreCRUD:
     @staticmethod
     async def get_genres(db: AsyncSession):
-        stmt = await db.execute(select(models.Genre))
+        stmt = await db.execute(select(models.Genre).order_by(models.Genre.name))
         return stmt.scalars().all()
 
     @staticmethod
