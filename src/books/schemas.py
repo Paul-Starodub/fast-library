@@ -45,6 +45,7 @@ class BookUpdate(BaseModel):
 
 class Book(BookBase):
     id: int
+    image_path: str
     genre: Genre | None
     author: Author | None
 
