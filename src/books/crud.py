@@ -82,7 +82,7 @@ class BookCRUD:
     async def create_book(db: AsyncSession, book_create: BookCreate):
         stmt = select(models.Book.id).where(models.Book.title == book_create.title)
         existing_book = await db.execute(stmt)
-        if existing_book.one_or_none():
+        if existing_book.scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Book with this title already exists")
         book = models.Book(**book_create.model_dump())
         db.add(book)
