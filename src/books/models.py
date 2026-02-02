@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, func
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from src.mixins import UserRelationMixin
 from src.models import Base
@@ -11,6 +11,14 @@ class Genre(Base):
 
     def __repr__(self) -> str:
         return f"Genre(id={self.id}, name={self.name})"
+
+
+class Tag(Base):
+    name: Mapped[str] = mapped_column(String(50), unique=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.utcnow)
+
+    def __repr__(self) -> str:
+        return f"Tag(id={self.id}, name={self.name})"
 
 
 class Book(UserRelationMixin, Base):
