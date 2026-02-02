@@ -1,8 +1,16 @@
 from datetime import datetime
-from sqlalchemy import String, ForeignKey, func
+from sqlalchemy import String, ForeignKey, func, Table, Column, Integer
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from src.mixins import UserRelationMixin
 from src.models import Base
+
+
+book_tag_association_table = Table(
+    "book_tags",
+    Base.metadata,
+    Column("book_id", Integer, ForeignKey("books.id"), primary_key=True),
+    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
+)
 
 
 class Genre(Base):
@@ -17,6 +25,8 @@ class Tag(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.utcnow)
 
+    books: Mapped[list["Book"]] = relationship(secondary=book_tag_association_table, back_populates="tags")
+
     def __repr__(self) -> str:
         return f"Tag(id={self.id}, name={self.name})"
 
@@ -30,6 +40,7 @@ class Book(UserRelationMixin, Base):
     genre_id: Mapped[int] = mapped_column(ForeignKey("genres.id"))
 
     genre: Mapped["Genre"] = relationship(back_populates="books")
+    tags: Mapped[list["Tag"]] = relationship(secondary=book_tag_association_table, back_populates="books")
 
     @property
     def image_path(self) -> str:
