@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     DB_USER: str
     DB_PASSWORD: str
+    ECHO: bool
 
     @property
     def DATABASE_URL(self) -> str:
