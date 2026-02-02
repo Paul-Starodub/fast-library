@@ -1,0 +1,20 @@
+[project]
+name = "fast-library"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Pavlo Starobub",email = "starodub.pavlo@alsodev.md"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard] (>=0.128.0,<0.129.0)",
+    "sqlalchemy (>=2.0.46,<3.0.0)",
+    "psycopg (>=3.3.2,<4.0.0)",
+    "greenlet (>=3.3.1,<4.0.0)",
+    "alembic (>=1.18.3,<2.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
