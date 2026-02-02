@@ -87,16 +87,8 @@ class BookCRUD:
         book = models.Book(**book_create.model_dump())
         db.add(book)
         await db.commit()
-        stmt = (
-            select(models.Book)
-            .where(models.Book.id == book.id)
-            .options(
-                joinedload(models.Book.author),
-                joinedload(models.Book.genre),
-            )
-        )
-        result = await db.execute(stmt)
-        return result.scalar_one()
+        await db.refresh(book, attribute_names=["genre", "author"])
+        return book
 
     @staticmethod
     async def update_book(db: AsyncSession, book_id: int, book_update: BookUpdate, partial: bool = False):
@@ -124,16 +116,8 @@ class BookCRUD:
         for field, value in update_data.items():
             setattr(book, field, value)
         await db.commit()
-        stmt = (
-            select(models.Book)
-            .where(models.Book.id == book.id)
-            .options(
-                joinedload(models.Book.genre),
-                joinedload(models.Book.author),
-            )
-        )
-        result = await db.execute(stmt)
-        return result.scalar_one()
+        await db.refresh(book, attribute_names=["genre", "author"])
+        return book
 
     @staticmethod
     async def delete_book(db: AsyncSession, book_id: int):
