@@ -14,10 +14,10 @@ class Genre(Base):
 
 class Book(Base):
     title: Mapped[str] = mapped_column(String(100), unique=True)
-    rating: Mapped[int] = mapped_column(default=0, ge=0)
+    rating: Mapped[int] = mapped_column(default=0)
     date_published: Mapped[datetime]
     image_file: Mapped[str | None] = mapped_column(String(200), nullable=True, default=None)
-    genre_id: Mapped[int] = mapped_column(ForeignKey("genre.id"), nullable=False)
+    genre_id: Mapped[int] = mapped_column(ForeignKey("genres.id"), nullable=False)
     genre: Mapped[Genre] = relationship("Genre", back_populates="books")
 
     @property
