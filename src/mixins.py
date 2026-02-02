@@ -13,9 +13,9 @@ class UserRelationMixin:
 
     # Don't use classmethod for user_id and user attributes
     @declared_attr
-    def user_id(cls) -> Mapped[int]:
+    def author_id(cls) -> Mapped[int]:
         return mapped_column(ForeignKey("authors.id"), unique=cls._user_id_unique, nullable=cls._user_id_nullable)
 
     @declared_attr
-    def user(cls) -> Mapped["Author"]:
+    def author(cls) -> Mapped["Author"]:
         return relationship("Author", back_populates=cls._user_back_populate)
