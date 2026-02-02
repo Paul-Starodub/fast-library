@@ -1,12 +1,16 @@
+from typing import TYPE_CHECKING
 from datetime import datetime
 from sqlalchemy import String, ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from src.models import Base
 
+if TYPE_CHECKING:
+    from src.authors.models import Author
+
 
 class Genre(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True)
-    books: Mapped[list["Book"]] = relationship("Book", back_populates="genre", cascade="all, delete-orphan")
+    books: Mapped[list["Book"]] = relationship(back_populates="genre", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"Genre(id={self.id}, name={self.name})"
@@ -18,7 +22,10 @@ class Book(Base):
     date_published: Mapped[datetime]
     image_file: Mapped[str | None] = mapped_column(String(200), nullable=True, default=None)
     genre_id: Mapped[int] = mapped_column(ForeignKey("genres.id"))
-    genre: Mapped[Genre] = relationship("Genre", back_populates="books")
+    author_id: Mapped[int] = mapped_column(ForeignKey("authors.id"))
+
+    genre: Mapped["Genre"] = relationship(back_populates="books")
+    author: Mapped["Author"] = relationship(back_populates="books")
 
     @property
     def image_path(self) -> str:
