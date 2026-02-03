@@ -1,9 +1,13 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 from sqlalchemy import String, ForeignKey, func, Table, Column, Integer
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 from src.mixins import UserRelationMixin
 from src.models import Base
+from src.orders.models import book_order_association_table
 
+if TYPE_CHECKING:
+    from src.orders.models import Order
 
 book_tag_association_table = Table(
     "book_tags",
@@ -41,6 +45,7 @@ class Book(UserRelationMixin, Base):
 
     genre: Mapped["Genre"] = relationship(back_populates="books")
     tags: Mapped[list["Tag"]] = relationship(secondary=book_tag_association_table, back_populates="books")
+    orders: Mapped[list["Order"]] = relationship(back_populates="books", secondary=book_order_association_table)
 
     @property
     def image_path(self) -> str:
