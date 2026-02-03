@@ -6,6 +6,7 @@ from src.models import Base
 
 if TYPE_CHECKING:
     from src.books.models import Book
+    from src.orders.models import Order
 
 
 class Author(Base):
@@ -14,6 +15,7 @@ class Author(Base):
 
     books: Mapped[list["Book"]] = relationship(back_populates="author", cascade="all, delete-orphan")
     profile: Mapped["Profile"] = relationship(back_populates="author")
+    orders: Mapped[list["Order"]] = relationship(back_populates="author")
 
     @property
     def image_path(self) -> str:
