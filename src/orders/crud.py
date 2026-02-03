@@ -10,7 +10,7 @@ from src.orders.schemas import OrderCreate
 async def get_orders(db: AsyncSession) -> list[Order]:
     stmt: Result = await db.execute(
         select(Order).options(
-            joinedload(Order.author), selectinload(Order.book_orders).joinedload(BookOrder.book).joinedload(Book.genre)
+            joinedload(Order.author), selectinload(Order.books).joinedload(BookOrder.book).joinedload(Book.genre)
         )
     )
     return list(stmt.scalars().all())
@@ -25,14 +25,14 @@ async def add_order(db: AsyncSession, order_in: OrderCreate) -> Order:
     if len(books_map) != len(set(book_ids)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more books not found")
     for item in order_in.books:
-        order.book_orders.append(BookOrder(book=books_map[item.book_id], quantity=item.quantity))
+        order.books.append(BookOrder(book=books_map[item.book_id], quantity=item.quantity))
     await db.commit()
     result = await db.execute(
         select(Order)
         .where(Order.id == order.id)
         .options(
             joinedload(Order.author),
-            selectinload(Order.book_orders).joinedload(BookOrder.book).joinedload(Book.genre),
+            selectinload(Order.books).joinedload(BookOrder.book).joinedload(Book.genre),
         )
     )
     order = result.scalar_one()

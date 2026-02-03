@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, Field
 from src.authors.schemas import Author
 from src.books.schemas import Book
@@ -12,7 +14,7 @@ class OrderBookIn(BaseModel):
     quantity: int = Field(ge=1)
 
 
-class OrderBook(BaseModel):
+class BookOrder(BaseModel):
     book: Book
     quantity: int
 
@@ -24,9 +26,10 @@ class OrderCreate(OrderBase):
     books: list[OrderBookIn]
 
 
-class Order(OrderBase):
+class Order(BaseModel):
     id: int
     author: Author
-    book_orders: list[OrderBook]
+    books: list[BookOrder]
+    ordered_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
