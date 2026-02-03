@@ -23,8 +23,15 @@ async def add_order(db: AsyncSession, order_in: OrderCreate) -> Order:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more books not found")
     order.books.extend(books)
     await db.commit()
-    await db.refresh(order)
-    return order
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order.id)
+        .options(
+            joinedload(Order.author),
+            selectinload(Order.books).joinedload(Book.genre),
+        )
+    )
+    return result.scalar_one()
 
 
 async def delete_order(db: AsyncSession, order_id: int) -> None:

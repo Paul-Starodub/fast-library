@@ -9,12 +9,12 @@ from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, BookUpdate
 
 class GenreCRUD:
     @staticmethod
-    async def get_genres(db: AsyncSession):
+    async def get_genres(db: AsyncSession) -> list[models.Genre]:
         stmt = await db.execute(select(models.Genre).order_by(models.Genre.name))
-        return stmt.scalars().all()
+        return list(stmt.scalars().all())
 
     @staticmethod
-    async def get_genre(db: AsyncSession, genre_id: int):
+    async def get_genre(db: AsyncSession, genre_id: int) -> models.Genre | None:
         stmt = await db.execute(select(models.Genre).where(models.Genre.id == genre_id))
         genre = stmt.scalars().first()
         if genre:
@@ -22,7 +22,7 @@ class GenreCRUD:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found")
 
     @staticmethod
-    async def get_genre_with_books(db: AsyncSession, genre_id: int):
+    async def get_genre_with_books(db: AsyncSession, genre_id: int) -> models.Genre | None:
         stmt = (
             select(models.Genre)
             .where(models.Genre.id == genre_id)
@@ -35,7 +35,7 @@ class GenreCRUD:
         raise HTTPException(status_code=404, detail="Genre not found")
 
     @staticmethod
-    async def create_genre(db: AsyncSession, genre_create: GenreCreate):
+    async def create_genre(db: AsyncSession, genre_create: GenreCreate) -> models.Genre:
         genre = models.Genre(**genre_create.model_dump())
         db.add(genre)
         try:
@@ -47,7 +47,7 @@ class GenreCRUD:
         return genre
 
     @staticmethod
-    async def update_genre(db: AsyncSession, genre_update: GenreUpdate, genre_id: int):
+    async def update_genre(db: AsyncSession, genre_update: GenreUpdate, genre_id: int) -> models.Genre:
         stmt = await db.execute(select(models.Genre).where(models.Genre.id == genre_id))
         genre = stmt.scalar_one_or_none()
         if not genre:
@@ -60,7 +60,7 @@ class GenreCRUD:
         return genre
 
     @staticmethod
-    async def delete_genre(db: AsyncSession, genre_id: int):
+    async def delete_genre(db: AsyncSession, genre_id: int) -> None:
         stmt = await db.execute(select(models.Genre).where(models.Genre.id == genre_id))
         genre = stmt.scalar_one_or_none()
         if not genre:
@@ -71,16 +71,16 @@ class GenreCRUD:
 
 class BookCRUD:
     @staticmethod
-    async def get_books(db: AsyncSession):
+    async def get_books(db: AsyncSession) -> list[models.Book]:
         stmt = await db.execute(
             select(models.Book)
             .options(joinedload(models.Book.genre), joinedload(models.Book.author))
             .order_by(models.Book.title)
         )
-        return stmt.scalars().all()
+        return list(stmt.scalars().all())
 
     @staticmethod
-    async def get_book(db: AsyncSession, book_id: int):
+    async def get_book(db: AsyncSession, book_id: int) -> models.Book | None:
         stmt = await db.execute(
             select(models.Book)
             .where(models.Book.id == book_id)
@@ -92,7 +92,7 @@ class BookCRUD:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
     @staticmethod
-    async def create_book(db: AsyncSession, book_create: BookCreate):
+    async def create_book(db: AsyncSession, book_create: BookCreate) -> models.Book:
         stmt = select(models.Book.id).where(models.Book.title == book_create.title)
         existing_book = await db.execute(stmt)
         if existing_book.scalar_one_or_none():
@@ -104,7 +104,9 @@ class BookCRUD:
         return book
 
     @staticmethod
-    async def update_book(db: AsyncSession, book_id: int, book_update: BookUpdate, partial: bool = False):
+    async def update_book(
+        db: AsyncSession, book_id: int, book_update: BookUpdate, partial: bool = False
+    ) -> models.Book | None:
         stmt = select(models.Book).where(models.Book.id == book_id)
         result = await db.execute(stmt)
         book = result.scalar_one_or_none()
@@ -133,7 +135,7 @@ class BookCRUD:
         return book
 
     @staticmethod
-    async def delete_book(db: AsyncSession, book_id: int):
+    async def delete_book(db: AsyncSession, book_id: int) -> None:
         stmt = await db.execute(select(models.Book).where(models.Book.id == book_id))
         book = stmt.scalars().first()
         if not book:
