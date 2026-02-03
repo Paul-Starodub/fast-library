@@ -10,7 +10,9 @@ from src.orders.schemas import OrderCreate
 async def get_orders(db: AsyncSession) -> list[Order]:
     stmt: Result = await db.execute(
         select(Order).options(
-            joinedload(Order.author), selectinload(Order.books).joinedload(BookOrder.book).joinedload(Book.genre)
+            joinedload(Order.author),
+            selectinload(Order.books).joinedload(BookOrder.book).joinedload(Book.author),
+            selectinload(Order.books).joinedload(BookOrder.book).joinedload(Book.genre),
         )
     )
     return list(stmt.scalars().all())
@@ -27,15 +29,16 @@ async def add_order(db: AsyncSession, order_in: OrderCreate) -> Order:
     for item in order_in.books:
         order.books.append(BookOrder(book=books_map[item.book_id], quantity=item.quantity))
     await db.commit()
-    result = await db.execute(
+    result = (
         select(Order)
         .where(Order.id == order.id)
         .options(
             joinedload(Order.author),
+            selectinload(Order.books).joinedload(BookOrder.book).joinedload(Book.author),
             selectinload(Order.books).joinedload(BookOrder.book).joinedload(Book.genre),
         )
     )
-    order = result.scalar_one()
+    order = await db.scalar(result)
     return order
 
 
