@@ -30,6 +30,25 @@ class Order(UserRelationMixin, Base):
     ordered_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.utcnow)
 
     books: Mapped[list[BookOrder]] = relationship(back_populates="order")
+    # books: Mapped[list["Book"]] = relationship(secondary="books_orders", back_populates="orders")  # alternative case via secondary table
 
     def __repr__(self) -> str:
         return f"Order: {self.id}"
+
+
+# # Association object
+# class BookOrder(Base):
+#     __tablename__ = "books_orders"
+#     __table_args__ = (UniqueConstraint("book_id", "order_id", name="idx_unique_book_order"),)
+#
+#     id: Mapped[int] = mapped_column(primary_key=True)
+#     book_id: Mapped[int] = mapped_column(ForeignKey("books.id"))
+#     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
+#     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+#
+#
+# class Order(UserRelationMixin, Base):
+#     _user_back_populate = "orders"
+#     ordered_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.utcnow)
+#
+#     books: Mapped[list["Book"]] = relationship(secondary="books_orders", back_populates="orders")  # alternative case via secondary table
