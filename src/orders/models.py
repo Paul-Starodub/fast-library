@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Integer, ForeignKey, func
+from sqlalchemy import Integer, ForeignKey, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from src.mixins import UserRelationMixin
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 # Association object
 class BookOrder(Base):
     __tablename__ = "books_orders"
+    __table_args__ = (UniqueConstraint("book_id", "order_id", name="idx_unique_book_order"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     book_id: Mapped[int] = mapped_column(ForeignKey("books.id"))
