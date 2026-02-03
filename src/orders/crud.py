@@ -3,12 +3,15 @@ from sqlalchemy import select, Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 from src import Order, Book
+from src.orders.models import BookOrder
 from src.orders.schemas import OrderCreate
 
 
 async def get_orders(db: AsyncSession) -> list[Order]:
     stmt: Result = await db.execute(
-        select(Order).options(selectinload(Order.books).joinedload(Book.genre), joinedload(Order.author))
+        select(Order).options(
+            joinedload(Order.author), selectinload(Order.book_orders).joinedload(BookOrder.book).joinedload(Book.genre)
+        )
     )
     return list(stmt.scalars().all())
 
@@ -16,22 +19,24 @@ async def get_orders(db: AsyncSession) -> list[Order]:
 async def add_order(db: AsyncSession, order_in: OrderCreate) -> Order:
     order = Order(author_id=order_in.author_id)
     db.add(order)
-    stmt = select(Book).where(Book.id.in_(order_in.book_ids))
-    result = await db.execute(stmt)
-    books = result.scalars().all()
-    if len(books) != len(set(order_in.book_ids)):
+    book_ids = [b.book_id for b in order_in.books]
+    result = await db.execute(select(Book).where(Book.id.in_(book_ids)))
+    books_map = {b.id: b for b in result.scalars().all()}
+    if len(books_map) != len(set(book_ids)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One or more books not found")
-    order.books.extend(books)
+    for item in order_in.books:
+        order.book_orders.append(BookOrder(book=books_map[item.book_id], quantity=item.quantity))
     await db.commit()
     result = await db.execute(
         select(Order)
         .where(Order.id == order.id)
         .options(
             joinedload(Order.author),
-            selectinload(Order.books).joinedload(Book.genre),
+            selectinload(Order.book_orders).joinedload(BookOrder.book).joinedload(Book.genre),
         )
     )
-    return result.scalar_one()
+    order = result.scalar_one()
+    return order
 
 
 async def delete_order(db: AsyncSession, order_id: int) -> None:
