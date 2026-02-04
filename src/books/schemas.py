@@ -45,7 +45,20 @@ class BookUpdate(BaseModel):
 
 class Book(BookBase):
     id: int
+    image_path: str
     genre: Genre | None
     author: Author | None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BookAuthor(BookBase):
+    id: int
+    image_path: str
+    author: Author | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class GenreBook(Genre):
+    books: list[BookAuthor]

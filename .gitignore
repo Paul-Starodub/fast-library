@@ -5,3 +5,4 @@ db_data/
 .env
 **__pycache__/
 db.sqlite3
+dump.sql

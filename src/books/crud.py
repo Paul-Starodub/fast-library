@@ -2,19 +2,19 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from src.books import models
 from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, BookUpdate
 
 
 class GenreCRUD:
     @staticmethod
-    async def get_genres(db: AsyncSession):
+    async def get_genres(db: AsyncSession) -> list[models.Genre]:
         stmt = await db.execute(select(models.Genre).order_by(models.Genre.name))
-        return stmt.scalars().all()
+        return list(stmt.scalars().all())
 
     @staticmethod
-    async def get_genre(db: AsyncSession, genre_id: int):
+    async def get_genre(db: AsyncSession, genre_id: int) -> models.Genre | None:
         stmt = await db.execute(select(models.Genre).where(models.Genre.id == genre_id))
         genre = stmt.scalars().first()
         if genre:
@@ -22,7 +22,20 @@ class GenreCRUD:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found")
 
     @staticmethod
-    async def create_genre(db: AsyncSession, genre_create: GenreCreate):
+    async def get_genre_with_books(db: AsyncSession, genre_id: int) -> models.Genre | None:
+        stmt = (
+            select(models.Genre)
+            .where(models.Genre.id == genre_id)
+            .options(selectinload(models.Genre.books).joinedload(models.Book.author))
+        )
+        result = await db.execute(stmt)
+        genre = result.scalars().first()
+        if genre:
+            return genre
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found")
+
+    @staticmethod
+    async def create_genre(db: AsyncSession, genre_create: GenreCreate) -> models.Genre:
         genre = models.Genre(**genre_create.model_dump())
         db.add(genre)
         try:
@@ -34,7 +47,7 @@ class GenreCRUD:
         return genre
 
     @staticmethod
-    async def update_genre(db: AsyncSession, genre_update: GenreUpdate, genre_id: int):
+    async def update_genre(db: AsyncSession, genre_update: GenreUpdate, genre_id: int) -> models.Genre:
         stmt = await db.execute(select(models.Genre).where(models.Genre.id == genre_id))
         genre = stmt.scalar_one_or_none()
         if not genre:
@@ -47,7 +60,7 @@ class GenreCRUD:
         return genre
 
     @staticmethod
-    async def delete_genre(db: AsyncSession, genre_id: int):
+    async def delete_genre(db: AsyncSession, genre_id: int) -> None:
         stmt = await db.execute(select(models.Genre).where(models.Genre.id == genre_id))
         genre = stmt.scalar_one_or_none()
         if not genre:
@@ -58,16 +71,16 @@ class GenreCRUD:
 
 class BookCRUD:
     @staticmethod
-    async def get_books(db: AsyncSession):
+    async def get_books(db: AsyncSession) -> list[models.Book]:
         stmt = await db.execute(
             select(models.Book)
             .options(joinedload(models.Book.genre), joinedload(models.Book.author))
             .order_by(models.Book.title)
         )
-        return stmt.scalars().all()
+        return list(stmt.scalars().all())
 
     @staticmethod
-    async def get_book(db: AsyncSession, book_id: int):
+    async def get_book(db: AsyncSession, book_id: int) -> models.Book | None:
         stmt = await db.execute(
             select(models.Book)
             .where(models.Book.id == book_id)
@@ -79,35 +92,26 @@ class BookCRUD:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
     @staticmethod
-    async def create_book(db: AsyncSession, book_create: BookCreate):
+    async def create_book(db: AsyncSession, book_create: BookCreate) -> models.Book:
         stmt = select(models.Book.id).where(models.Book.title == book_create.title)
         existing_book = await db.execute(stmt)
-        if existing_book.one_or_none():
+        if existing_book.scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Book with this title already exists")
         book = models.Book(**book_create.model_dump())
         db.add(book)
         await db.commit()
-        stmt = (
-            select(models.Book)
-            .where(models.Book.id == book.id)
-            .options(
-                joinedload(models.Book.author),
-                joinedload(models.Book.genre),
-            )
-        )
-        result = await db.execute(stmt)
-        return result.scalar_one()
+        await db.refresh(book, attribute_names=["genre", "author"])
+        return book
 
     @staticmethod
-    async def update_book(db: AsyncSession, book_id: int, book_update: BookUpdate, partial: bool = False):
+    async def update_book(
+        db: AsyncSession, book_id: int, book_update: BookUpdate, partial: bool = False
+    ) -> models.Book | None:
         stmt = select(models.Book).where(models.Book.id == book_id)
         result = await db.execute(stmt)
         book = result.scalar_one_or_none()
         if not book:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Book not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
         update_data = book_update.model_dump(exclude_unset=partial)
         new_title = update_data.get("title")
         if new_title and new_title != book.title:
@@ -124,19 +128,11 @@ class BookCRUD:
         for field, value in update_data.items():
             setattr(book, field, value)
         await db.commit()
-        stmt = (
-            select(models.Book)
-            .where(models.Book.id == book.id)
-            .options(
-                joinedload(models.Book.genre),
-                joinedload(models.Book.author),
-            )
-        )
-        result = await db.execute(stmt)
-        return result.scalar_one()
+        await db.refresh(book, attribute_names=["genre", "author"])
+        return book
 
     @staticmethod
-    async def delete_book(db: AsyncSession, book_id: int):
+    async def delete_book(db: AsyncSession, book_id: int) -> None:
         stmt = await db.execute(select(models.Book).where(models.Book.id == book_id))
         book = stmt.scalars().first()
         if not book:
