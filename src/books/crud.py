@@ -32,7 +32,7 @@ class GenreCRUD:
         genre = result.scalars().first()
         if genre:
             return genre
-        raise HTTPException(status_code=404, detail="Genre not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found")
 
     @staticmethod
     async def create_genre(db: AsyncSession, genre_create: GenreCreate) -> models.Genre:
@@ -111,10 +111,7 @@ class BookCRUD:
         result = await db.execute(stmt)
         book = result.scalar_one_or_none()
         if not book:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Book not found",
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
         update_data = book_update.model_dump(exclude_unset=partial)
         new_title = update_data.get("title")
         if new_title and new_title != book.title:
