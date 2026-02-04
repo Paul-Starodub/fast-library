@@ -1,6 +1,8 @@
 import secrets
-from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+import uuid
+from time import time
+from typing import Annotated, Any
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Response, Cookie
 from fastapi.security import HTTPBasicCredentials, HTTPBasic
 
 router = APIRouter(prefix="/demo-auth", tags=["Demo Auth"])
@@ -59,3 +61,50 @@ def get_username_by_static_auth_token(static_auth_token: str = Header(alias="x-a
 @router.get("/some-http-header-auth-username/")
 def demo_auth_some_http_header(username: str = Depends(get_username_by_static_auth_token)):
     return {"message": f"Hi!{username}", "username": username}
+
+
+# cookie authorization
+##################################
+
+COOKIES: dict[str, dict[str, Any]] = {}
+COOKIES_SESSION_ID_KEY = "web-app-session-id"
+
+
+def generate_session_id() -> str:
+    return uuid.uuid4().hex
+
+
+def get_session_data(session_id: str = Cookie(alias=COOKIES_SESSION_ID_KEY)) -> dict[str, Any]:
+    if session_id not in COOKIES:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+    return COOKIES[session_id]
+
+
+@router.post("/login-cookie/")
+def demo_auth_login_set_cookie(
+    response: Response,
+    auth_username: str = Depends(get_auth_user_username),
+    # username: str = Depends(get_username_by_static_auth_token)
+):
+    session_id = generate_session_id()
+    COOKIES[session_id] = {"username": auth_username, "login_at": int(time())}
+    response.set_cookie(COOKIES_SESSION_ID_KEY, session_id)
+    return {"result": "Ok"}
+
+
+@router.get("/check-cookie/")
+def demo_auth_check_cookie(user_session_data: dict = Depends(get_session_data)):
+    username = user_session_data.get("username")
+    return {"message": f"Hello {username}", **user_session_data}
+
+
+@router.get("/logout-cookie/")
+def demo_auth_logout_cookie(
+    response: Response,
+    session_id: str = Cookie(alias=COOKIES_SESSION_ID_KEY),
+    user_session_data: dict = Depends(get_session_data),
+):
+    COOKIES.pop(session_id)
+    response.delete_cookie(COOKIES_SESSION_ID_KEY)
+    username = user_session_data.get("username")
+    return {"message": f"By {username}"}
