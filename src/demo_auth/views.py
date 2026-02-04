@@ -1,12 +1,14 @@
 import secrets
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from fastapi.security import HTTPBasicCredentials, HTTPBasic
 
 router = APIRouter(prefix="/demo-auth", tags=["Demo Auth"])
 
 
 # basic authentication
+#################################
+
 security = HTTPBasic()
 
 
@@ -20,7 +22,7 @@ def demo_basic_auth_credentials(
 usernames_to_passwords = {"admin": "admin", "john": "password"}
 
 
-def get_auth_user_username(credentials: Annotated[HTTPBasicCredentials, Depends(security)]):
+def get_auth_user_username(credentials: Annotated[HTTPBasicCredentials, Depends(security)]) -> str:
     unauthorized_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Incorrect username or password",
@@ -37,3 +39,23 @@ def get_auth_user_username(credentials: Annotated[HTTPBasicCredentials, Depends(
 @router.get("/basic-auth-username/")
 def demo_basic_auth_username(auth_username: str = Depends(get_auth_user_username)):
     return {"message": f"Hi!{auth_username}", "username": auth_username}
+
+
+# token authentication
+#########################################
+
+static_auth_token_to_username = {
+    "4e06982488643b1165480dbc8559594f6f4362b891416b1117a5d0bca50314d1": "admin",
+    "c94179cd1f40ec02f214afd1914a38e206fd6b07794bd57ce3213b144502e0bd": "john",
+}
+
+
+def get_username_by_static_auth_token(static_auth_token: str = Header(alias="x-auth-token")) -> str:
+    if username := static_auth_token_to_username.get(static_auth_token):
+        return username
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalid")
+
+
+@router.get("/some-http-header-auth-username/")
+def demo_auth_some_http_header(username: str = Depends(get_username_by_static_auth_token)):
+    return {"message": f"Hi!{username}", "username": username}
