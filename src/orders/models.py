@@ -19,7 +19,7 @@ class BookOrder(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     book_id: Mapped[int] = mapped_column(ForeignKey("books.id"))
     order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
-    quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1, server_default="1")
+    quantity: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
     book: Mapped["Book"] = relationship(back_populates="orders")
     order: Mapped["Order"] = relationship(back_populates="books")
