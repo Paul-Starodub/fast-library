@@ -17,8 +17,8 @@ class BookOrder(Base):
     __table_args__ = (UniqueConstraint("book_id", "order_id", name="idx_unique_book_order"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    book_id: Mapped[int] = mapped_column(ForeignKey("books.id"))
-    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"))
+    book_id: Mapped[int] = mapped_column(ForeignKey("books.id", ondelete="CASCADE"))
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
     quantity: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
 
     book: Mapped["Book"] = relationship(back_populates="orders")
@@ -29,7 +29,7 @@ class Order(UserRelationMixin, Base):
     _user_back_populate = "orders"
     ordered_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.utcnow)
 
-    books: Mapped[list[BookOrder]] = relationship(back_populates="order")
+    books: Mapped[list[BookOrder]] = relationship(back_populates="order", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"Order: {self.id}"
