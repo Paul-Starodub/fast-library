@@ -15,6 +15,7 @@ class OrderBookIn(BaseModel):
 
 
 class BookOrder(BaseModel):
+    id: int
     book: Book
     quantity: int
 
