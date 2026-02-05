@@ -22,6 +22,8 @@ class AuthorPublic(AuthorBase):
 
 class AuthorPrivate(AuthorPublic):
     email: EmailStr
+    is_active: bool
+    is_superuser: bool
 
 
 class Token(BaseModel):
