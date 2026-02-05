@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     ECHO: bool
-    # auth_jwt: AuthJWT = AuthJWT()
+    auth_jwt: AuthJWT = AuthJWT()
 
     secret_key: SecretStr
     algorithm: str = "HS256"
