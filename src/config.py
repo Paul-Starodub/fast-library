@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).parent.parent
@@ -21,7 +21,11 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     ECHO: bool
-    auth_jwt: AuthJWT = AuthJWT()
+    # auth_jwt: AuthJWT = AuthJWT()
+
+    secret_key: SecretStr
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
 
     @property
     def DATABASE_URL(self) -> str:
