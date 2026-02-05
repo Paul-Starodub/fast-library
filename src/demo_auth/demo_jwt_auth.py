@@ -18,7 +18,7 @@ from src.authors.schemas import UserSchema
 
 # http_bearer = HTTPBearer()
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/demo-auth/jwt/jwt/login/",
+    tokenUrl="/demo-auth/jwt/login/",
 )
 
 
