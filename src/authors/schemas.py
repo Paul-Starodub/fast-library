@@ -1,19 +1,32 @@
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class AuthorBase(BaseModel):
     username: str
+    email: EmailStr = Field(max_length=120)
     image_file: str | None = None
 
 
 class AuthorCreate(AuthorBase):
-    pass
+    password: str = Field(min_length=8)
 
 
-class Author(AuthorBase):
-    id: int
-
+class AuthorPublic(AuthorBase):
     model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
+    image_file: str | None
+    image_path: str
+
+
+class AuthorPrivate(AuthorPublic):
+    email: EmailStr
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
 
 class UserSchema(BaseModel):  # for learing purpose
