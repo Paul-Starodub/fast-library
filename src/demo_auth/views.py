@@ -4,8 +4,10 @@ from time import time
 from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Response, Cookie
 from fastapi.security import HTTPBasicCredentials, HTTPBasic
+from .demo_jwt_auth import router as demo_jwt_auth_router
 
 router = APIRouter(prefix="/demo-auth", tags=["Demo Auth"])
+router.include_router(demo_jwt_auth_router)
 
 
 # basic authentication
