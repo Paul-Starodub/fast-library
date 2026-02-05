@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String
+from pydantic import EmailStr
+from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.mixins import UserRelationMixin
 from src.models import Base
-from pydantic import EmailStr
 
 if TYPE_CHECKING:
     from src.books.models import Book
@@ -15,7 +15,10 @@ if TYPE_CHECKING:
 class Author(Base):
     email: Mapped[EmailStr] = mapped_column(String(50), unique=True)
     username: Mapped[str] = mapped_column(String(50), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(200))
     image_file: Mapped[str | None] = mapped_column(String(200), nullable=True, default=None)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     books: Mapped[list["Book"]] = relationship(back_populates="author", cascade="all, delete-orphan")
     profile: Mapped["Profile"] = relationship(back_populates="author")
