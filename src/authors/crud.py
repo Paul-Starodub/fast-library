@@ -45,3 +45,11 @@ async def create_author(author: AuthorCreate, db: Annotated[AsyncSession, Depend
 async def get_authors(db: AsyncSession, limit, offset) -> list[models.Author]:
     stmt = await db.execute(select(models.Author).order_by(models.Author.username).limit(limit).offset(offset))
     return list(stmt.scalars().all())
+
+
+async def get_author(db: AsyncSession, author_id) -> models.Author | None:
+    stmt = await db.execute(select(models.Author).where(models.Author.id == author_id))
+    author = stmt.scalar_one_or_none()
+    if author:
+        return author
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")

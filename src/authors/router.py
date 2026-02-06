@@ -7,7 +7,7 @@ from src.authors import crud
 from src.authors.schemas import AuthorPrivate, AuthorCreate, AuthorPublic
 from src.dependencies import get_db
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/authors", tags=["authors"])
 
 
 @router.post("/", response_model=AuthorPrivate, status_code=status.HTTP_201_CREATED)
@@ -18,3 +18,8 @@ async def create_author(db: Annotated[AsyncSession, Depends(get_db)], author: Au
 @router.get("/", response_model=list[AuthorPublic])
 async def get_authors(db: Annotated[AsyncSession, Depends(get_db)], limit: int = 20, offset: int = 0):
     return await crud.get_authors(db=db, limit=limit, offset=offset)
+
+
+@router.get("/{author_id}/", response_model=AuthorPublic)
+async def get_author(db: Annotated[AsyncSession, Depends(get_db)], author_id: int):
+    return await crud.get_author(db=db, author_id=author_id)
