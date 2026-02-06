@@ -12,8 +12,8 @@ class GenreCreate(GenreBase):
     pass
 
 
-class GenreUpdate(BaseModel):
-    name: Annotated[str, Field(default=None, min_length=1, max_length=50)]
+class GenreUpdate(GenreBase):
+    pass
 
 
 class Genre(GenreBase):
