@@ -3,12 +3,12 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class AuthorBase(BaseModel):
     username: str
-    email: EmailStr = Field(max_length=120)
     image_file: str | None = None
 
 
 class AuthorCreate(AuthorBase):
     password: str = Field(min_length=8)
+    email: EmailStr = Field(max_length=50)
 
 
 class AuthorPublic(AuthorBase):
@@ -21,7 +21,7 @@ class AuthorPublic(AuthorBase):
 
 
 class AuthorPrivate(AuthorPublic):
-    email: EmailStr
+    email: EmailStr = Field(max_length=50)
     is_active: bool
     is_superuser: bool
 
