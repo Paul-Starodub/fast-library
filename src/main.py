@@ -15,7 +15,7 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 app.include_router(genres_router)
 app.include_router(books_router)
 app.include_router(orders_router)
-app.include_router(demo_auth_router)
+# app.include_router(demo_auth_router)
 app.include_router(author_router)
 
 

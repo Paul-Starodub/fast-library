@@ -11,6 +11,15 @@ class AuthorCreate(AuthorBase):
     email: EmailStr = Field(max_length=50)
 
 
+class AuthorUpdate(BaseModel):
+    username: str | None = None
+    image_file: str | None = None
+    email: EmailStr = Field(max_length=50)
+    password: str | None = Field(default=None, min_length=8)
+    is_active: bool | None = None
+    is_superuser: bool | None = None
+
+
 class AuthorPublic(AuthorBase):
     model_config = ConfigDict(from_attributes=True)
 
