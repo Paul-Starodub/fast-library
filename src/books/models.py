@@ -46,7 +46,7 @@ class Book(UserRelationMixin, Base):
 
     genre: Mapped["Genre"] = relationship(back_populates="books")
     tags: Mapped[list["Tag"]] = relationship(secondary=book_tag_association_table, back_populates="books")
-    orders: Mapped[list["BookOrder"]] = relationship(back_populates="book")
+    orders: Mapped[list["BookOrder"]] = relationship(back_populates="book", cascade="all, delete-orphan")
 
     @property
     def image_path(self) -> str:

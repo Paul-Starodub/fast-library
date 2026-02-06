@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
-from src.authors.schemas import Author
+from src.authors.schemas import AuthorPublic
 from src.books.schemas import Book
 
 
@@ -29,7 +29,7 @@ class OrderCreate(OrderBase):
 
 class Order(BaseModel):
     id: int
-    author: Author
+    author: AuthorPublic
     books: list[BookOrder]
     ordered_at: datetime
 

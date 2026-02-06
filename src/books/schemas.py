@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Optional
 from pydantic import BaseModel, Field, ConfigDict
-from src.authors.schemas import Author
+from src.authors.schemas import AuthorPublic
 
 
 class GenreBase(BaseModel):
@@ -47,7 +47,7 @@ class Book(BookBase):
     id: int
     image_path: str
     genre: Genre | None
-    author: Author | None
+    author: AuthorPublic | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -55,7 +55,7 @@ class Book(BookBase):
 class BookAuthor(BookBase):
     id: int
     image_path: str
-    author: Author | None
+    author: AuthorPublic | None
 
     model_config = ConfigDict(from_attributes=True)
 
