@@ -14,7 +14,7 @@ class GenreCRUD:
         return list(stmt.scalars().all())
 
     @staticmethod
-    async def get_genre(db: AsyncSession, genre_id: int) -> models.Genre | None:
+    async def get_genre(db: AsyncSession, genre_id: int) -> models.Genre:
         stmt = await db.execute(select(models.Genre).where(models.Genre.id == genre_id))
         genre = stmt.scalars().first()
         if genre:
@@ -22,7 +22,7 @@ class GenreCRUD:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found")
 
     @staticmethod
-    async def get_genre_with_books(db: AsyncSession, genre_id: int) -> models.Genre | None:
+    async def get_genre_with_books(db: AsyncSession, genre_id: int) -> models.Genre:
         stmt = (
             select(models.Genre)
             .where(models.Genre.id == genre_id)
@@ -80,7 +80,7 @@ class BookCRUD:
         return list(stmt.scalars().all())
 
     @staticmethod
-    async def get_book(db: AsyncSession, book_id: int) -> models.Book | None:
+    async def get_book(db: AsyncSession, book_id: int) -> models.Book:
         stmt = await db.execute(
             select(models.Book)
             .where(models.Book.id == book_id)
@@ -106,7 +106,7 @@ class BookCRUD:
     @staticmethod
     async def update_book(
         db: AsyncSession, book_id: int, book_update: BookUpdate, partial: bool = False
-    ) -> models.Book | None:
+    ) -> models.Book:
         stmt = select(models.Book).where(models.Book.id == book_id)
         result = await db.execute(stmt)
         book = result.scalar_one_or_none()
