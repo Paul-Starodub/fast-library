@@ -17,9 +17,7 @@ from src.auth import utils as auth_utils
 from src.authors.schemas import UserSchema
 
 # http_bearer = HTTPBearer()
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/demo-auth/jwt/login/",
-)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/demo-auth/jwt/login/")
 
 
 class TokenInfo(BaseModel):
@@ -45,10 +43,7 @@ users_db: dict[str, UserSchema] = {
 }
 
 
-def validate_auth_user(
-    username: str = Form(),
-    password: str = Form(),
-):
+def validate_auth_user(username: str = Form(), password: str = Form()):
     unauthed_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="invalid username or password",
@@ -56,10 +51,7 @@ def validate_auth_user(
     if not (user := users_db.get(username)):
         raise unauthed_exc
 
-    if not auth_utils.validate_password(
-        password=password,
-        hashed_password=user.password,
-    ):
+    if not auth_utils.validate_password(password=password, hashed_password=user.password):
         raise unauthed_exc
 
     if not user.active:
@@ -77,9 +69,7 @@ def get_current_token_payload(
 ) -> dict:
     # token = credentials.credentials
     try:
-        payload = auth_utils.decode_jwt(
-            token=token,
-        )
+        payload = auth_utils.decode_jwt(token=token)
     except InvalidTokenError as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -95,10 +85,7 @@ def get_current_auth_user(
     username: str | None = payload.get("sub")
     if user := users_db.get(username):
         return user
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="token invalid (user not found)",
-    )
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="token invalid (user not found)")
 
 
 def get_current_active_auth_user(
@@ -106,10 +93,7 @@ def get_current_active_auth_user(
 ):
     if user.active:
         return user
-    raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="user inactive",
-    )
+    raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user inactive")
 
 
 @router.post("/login/", response_model=TokenInfo)
@@ -124,10 +108,7 @@ def auth_user_issue_jwt(
         # "logged_in_at"
     }
     token = auth_utils.encode_jwt(jwt_payload)
-    return TokenInfo(
-        access_token=token,
-        token_type="Bearer",
-    )
+    return TokenInfo(access_token=token, token_type="Bearer")
 
 
 @router.get("/users/me/")
@@ -136,8 +117,4 @@ def auth_user_check_self_info(
     user: UserSchema = Depends(get_current_active_auth_user),
 ):
     iat = payload.get("iat")
-    return {
-        "username": user.username,
-        "email": user.email,
-        "logged_in_at": iat,
-    }
+    return {"username": user.username, "email": user.email, "logged_in_at": iat}
