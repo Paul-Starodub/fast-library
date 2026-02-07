@@ -145,8 +145,8 @@ class BookCRUD:
         stmt = await db.execute(
             select(models.Book)
             .options(
-                selectinload(models.Book.genre),
-                selectinload(models.Book.author),
+                # joinedload(models.Book.genre),
+                # joinedload(models.Book.author),
                 selectinload(models.Book.tags),
             )
             .where(models.Book.id == book_id)
@@ -162,7 +162,7 @@ class BookCRUD:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tag for this book already exists")
         book.tags.append(tag)
         await db.commit()
-        await db.refresh(book)
+        await db.refresh(book, attribute_names=["genre", "author"])
         return book
 
 
