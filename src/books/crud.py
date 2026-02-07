@@ -74,7 +74,7 @@ class BookCRUD:
     async def get_books(db: AsyncSession) -> list[models.Book]:
         stmt = await db.execute(
             select(models.Book)
-            .options(joinedload(models.Book.genre), joinedload(models.Book.author))
+            .options(joinedload(models.Book.genre), joinedload(models.Book.author), selectinload(models.Book.tags))
             .order_by(models.Book.title)
         )
         return list(stmt.scalars().all())

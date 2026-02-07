@@ -66,6 +66,7 @@ class Book(BookBase):
     image_path: str
     genre: Genre | None
     author: AuthorPublic | None
+    tags: list[Tag] | None
 
     model_config = ConfigDict(from_attributes=True)
 
