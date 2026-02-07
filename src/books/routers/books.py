@@ -12,7 +12,7 @@ async def get_books(db: Annotated[AsyncSession, Depends(get_db)]):
     return await crud.crud_book.get_books(db)
 
 
-@router.get("/{book_id}/", response_model=schemas.Book)
+@router.get("/{book_id}/", response_model=schemas.BookWithTags)
 async def get_book(db: Annotated[AsyncSession, Depends(get_db)], book_id: int):
     return await crud.crud_book.get_book(db, book_id)
 

@@ -84,7 +84,7 @@ class BookCRUD:
         stmt = await db.execute(
             select(models.Book)
             .where(models.Book.id == book_id)
-            .options(joinedload(models.Book.genre), joinedload(models.Book.author))
+            .options(joinedload(models.Book.genre), joinedload(models.Book.author), selectinload(models.Book.tags))
         )
         book = stmt.scalars().first()
         if book:
