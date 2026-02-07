@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Annotated, Optional
+
 from pydantic import BaseModel, Field, ConfigDict
+
 from src.authors.schemas import AuthorPublic
 
 
@@ -68,6 +70,10 @@ class Book(BookBase):
     author: AuthorPublic | None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BookWithTags(Book):
+    tags: list[Tag] | None
 
 
 class BookAuthor(BookBase):

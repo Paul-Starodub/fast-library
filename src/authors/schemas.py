@@ -14,7 +14,7 @@ class AuthorCreate(AuthorBase):
 class AuthorUpdate(BaseModel):
     username: str | None = None
     image_file: str | None = None
-    email: EmailStr = Field(max_length=50)
+    email: EmailStr = Field(default=None, max_length=50)
     password: str | None = Field(default=None, min_length=8)
     is_active: bool | None = None
     is_superuser: bool | None = None
@@ -53,6 +53,10 @@ class ProfileBase(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     bio: str | None = None
+
+
+class ProfileCreateForMe(ProfileBase):
+    pass
 
 
 class ProfileCreate(ProfileBase):
