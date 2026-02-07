@@ -7,7 +7,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.authors import models
-from src.authors.schemas import AuthorCreate, AuthorUpdate, Token
+from src.authors.schemas import AuthorCreate, AuthorUpdate, Token, ProfileCreate
 from src.authors.security import hash_password, oauth2_scheme, verify_access_token, verify_password, create_access_token
 from src.config import settings
 from src.dependencies import get_db
@@ -154,8 +154,14 @@ async def get_current_author(
     author = result.scalar_one_or_none()
     if not author:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Author not found",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Author not found", headers={"WWW-Authenticate": "Bearer"}
         )
     return author
+
+
+async def create_profile(profile_create: ProfileCreate, db: Annotated[AsyncSession, Depends(get_db)]) -> models.Profile:
+    profile = models.Profile(**profile_create.model_dump())
+    db.add(profile)
+    await db.commit()
+    await db.refresh(profile, attribute_names=["author"])
+    return profile
