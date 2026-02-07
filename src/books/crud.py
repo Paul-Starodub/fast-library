@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import select, and_, insert, exists
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -140,30 +140,37 @@ class BookCRUD:
         await db.delete(book)
         await db.commit()
 
-    @staticmethod  # TODO: optimise
+    @staticmethod
     async def attach_tag_to_book(db: AsyncSession, book_id: int, tag_id: int) -> models.Book:
-        stmt = await db.execute(
-            select(models.Book)
-            .options(
-                # joinedload(models.Book.genre),
-                # joinedload(models.Book.author),
-                selectinload(models.Book.tags),
+        stmt = select(models.Book, exists(select(1).where(models.Tag.id == tag_id))).where(models.Book.id == book_id)
+        result = await db.execute(stmt)
+        row = result.first()
+        if not row or not row[0]:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+        if not row[1]:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+        check_stmt = (
+            select(1)
+            .where(
+                and_(
+                    models.book_tag_association_table.c.book_id == book_id,
+                    models.book_tag_association_table.c.tag_id == tag_id,
+                )
             )
+            .exists()
+        )
+        if await db.scalar(select(check_stmt)):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tag for this book already exists")
+        stmt = insert(models.book_tag_association_table).values(book_id=book_id, tag_id=tag_id)
+        await db.execute(stmt)
+        await db.commit()
+        stmt = (
+            select(models.Book)
+            .options(joinedload(models.Book.genre), joinedload(models.Book.author), selectinload(models.Book.tags))
             .where(models.Book.id == book_id)
         )
-        book = stmt.scalars().first()
-        if not book:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
-        stmt = await db.execute(select(models.Tag).where(models.Tag.id == tag_id))
-        tag = stmt.scalars().first()
-        if not tag:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
-        if tag in book.tags:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tag for this book already exists")
-        book.tags.append(tag)
-        await db.commit()
-        await db.refresh(book, attribute_names=["genre", "author"])
-        return book
+        result = await db.execute(stmt)
+        return result.scalars().first()
 
 
 class TagCrud:
