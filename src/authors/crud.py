@@ -178,7 +178,7 @@ async def get_all_profiles(db: Annotated[AsyncSession, Depends(get_db)]) -> list
     return list(profiles.scalars().all())
 
 
-async def get_current_profile_for_author(db: Annotated[AsyncSession, Depends(get_db)], author_id: int):
+async def get_profile_by_author_id(db: AsyncSession, author_id: int) -> models.Profile:
     stmt = await db.execute(
         select(models.Profile)
         .where(models.Profile.author_id == author_id)
