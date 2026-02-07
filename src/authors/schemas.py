@@ -40,10 +40,31 @@ class Token(BaseModel):
     token_type: str
 
 
-class UserSchema(BaseModel):  # for learing purpose
+class UserSchema(BaseModel):  # for learning purpose
     model_config = ConfigDict(strict=True)
 
     username: str
     password: bytes
     email: EmailStr | None = None
     active: bool = True
+
+
+class ProfileBase(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    bio: str | None = None
+
+
+class ProfileCreate(ProfileBase):
+    author_id: int
+
+
+class ProfileUpdate(ProfileBase):
+    pass
+
+
+class Profile(ProfileBase):
+    id: int
+    author: AuthorPublic
+
+    model_config = ConfigDict(from_attributes=True)

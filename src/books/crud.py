@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 from src.books import models
-from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, BookUpdate
+from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, BookUpdate, TagCreate, TagUpdate
 
 
 class GenreCRUD:
@@ -14,7 +14,7 @@ class GenreCRUD:
         return list(stmt.scalars().all())
 
     @staticmethod
-    async def get_genre(db: AsyncSession, genre_id: int) -> models.Genre | None:
+    async def get_genre(db: AsyncSession, genre_id: int) -> models.Genre:
         stmt = await db.execute(select(models.Genre).where(models.Genre.id == genre_id))
         genre = stmt.scalars().first()
         if genre:
@@ -22,7 +22,7 @@ class GenreCRUD:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Genre not found")
 
     @staticmethod
-    async def get_genre_with_books(db: AsyncSession, genre_id: int) -> models.Genre | None:
+    async def get_genre_with_books(db: AsyncSession, genre_id: int) -> models.Genre:
         stmt = (
             select(models.Genre)
             .where(models.Genre.id == genre_id)
@@ -80,7 +80,7 @@ class BookCRUD:
         return list(stmt.scalars().all())
 
     @staticmethod
-    async def get_book(db: AsyncSession, book_id: int) -> models.Book | None:
+    async def get_book(db: AsyncSession, book_id: int) -> models.Book:
         stmt = await db.execute(
             select(models.Book)
             .where(models.Book.id == book_id)
@@ -106,7 +106,7 @@ class BookCRUD:
     @staticmethod
     async def update_book(
         db: AsyncSession, book_id: int, book_update: BookUpdate, partial: bool = False
-    ) -> models.Book | None:
+    ) -> models.Book:
         stmt = select(models.Book).where(models.Book.id == book_id)
         result = await db.execute(stmt)
         book = result.scalar_one_or_none()
@@ -141,6 +141,59 @@ class BookCRUD:
         await db.commit()
 
 
+class TagCrud:
+    @staticmethod
+    async def get_all_tags(db: AsyncSession) -> list[models.Tag]:
+        stmt = await db.execute(select(models.Tag).order_by(models.Tag.name))
+        tags = stmt.scalars().all()
+        return list(tags)
+
+    @staticmethod
+    async def get_tag_by_id(db: AsyncSession, tag_id: int) -> models.Tag:
+        stmt = await db.execute(select(models.Tag).where(models.Tag.id == tag_id))
+        tag = stmt.scalar_one_or_none()
+        if not tag:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+        return tag
+
+    @staticmethod
+    async def create_tag(db: AsyncSession, tag_create: TagCreate) -> models.Tag:
+        tag = models.Tag(**tag_create.model_dump())
+        db.add(tag)
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tag already exists")
+        await db.refresh(tag)
+        return tag
+
+    @staticmethod
+    async def update_tag(db: AsyncSession, tag_id: int, tag_update: TagUpdate) -> models.Tag:
+        tag = await db.scalar(select(models.Tag).where(models.Tag.id == tag_id))
+        if not tag:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+        for field, value in tag_update.model_dump().items():
+            setattr(tag, field, value)
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tag already exists")
+        await db.refresh(tag)
+        return tag
+
+    @staticmethod
+    async def delete_tag(db: AsyncSession, tag_id: int) -> None:
+        tag = await db.scalar(select(models.Tag).where(models.Tag.id == tag_id))
+        if not tag:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+        await db.delete(tag)
+        await db.commit()
+
+
 crud_genre = GenreCRUD()
 
 crud_book = BookCRUD()
+
+crud_tag = TagCrud()

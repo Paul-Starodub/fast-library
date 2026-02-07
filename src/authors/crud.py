@@ -5,9 +5,10 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from src.authors import models
-from src.authors.schemas import AuthorCreate, AuthorUpdate, Token
+from src.authors.schemas import AuthorCreate, AuthorUpdate, Token, ProfileCreate, ProfileUpdate
 from src.authors.security import hash_password, oauth2_scheme, verify_access_token, verify_password, create_access_token
 from src.config import settings
 from src.dependencies import get_db
@@ -137,7 +138,6 @@ async def get_current_author(
     token: Annotated[str, Depends(oauth2_scheme)], db: Annotated[AsyncSession, Depends(get_db)]
 ) -> models.Author:
     author_id = verify_access_token(token)
-    print(f"{author_id=}")
     authentication_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
@@ -155,8 +155,58 @@ async def get_current_author(
     author = result.scalar_one_or_none()
     if not author:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Author not found",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Author not found", headers={"WWW-Authenticate": "Bearer"}
         )
     return author
+
+
+async def create_profile(profile_create: ProfileCreate, db: Annotated[AsyncSession, Depends(get_db)]) -> models.Profile:
+    stmt = select(models.Profile.id).where(models.Profile.author_id == profile_create.author_id)
+    existing_profile = await db.execute(stmt)
+    if existing_profile.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Profile for this author already exists")
+    profile = models.Profile(**profile_create.model_dump())
+    db.add(profile)
+    await db.commit()
+    await db.refresh(profile, attribute_names=["author"])
+    return profile
+
+
+async def get_all_profiles(db: Annotated[AsyncSession, Depends(get_db)]) -> list[models.Profile]:
+    stmt = select(models.Profile).options(joinedload(models.Profile.author)).order_by(models.Profile.author_id)
+    profiles = await db.execute(stmt)
+    return list(profiles.scalars().all())
+
+
+async def get_profile_by_author_id(db: AsyncSession, author_id: int) -> models.Profile:
+    stmt = await db.execute(
+        select(models.Profile).where(models.Profile.author_id == author_id).options(joinedload(models.Profile.author))
+    )
+    profile = stmt.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    return profile
+
+
+async def update_profile(profile_update: ProfileUpdate, profile_id: int, db: AsyncSession) -> models.Profile:
+    stmt = await db.execute(
+        select(models.Profile).where(models.Profile.id == profile_id).options(joinedload(models.Profile.author))
+    )
+    profile = stmt.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    update_data = profile_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(profile, field, value)
+    await db.commit()
+    await db.refresh(profile)
+    return profile
+
+
+async def delete_profile_by_id(profile_id: int, db: AsyncSession) -> None:
+    stmt = await db.execute(select(models.Profile).where(models.Profile.id == profile_id))
+    profile = stmt.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    await db.delete(profile)
+    await db.commit()

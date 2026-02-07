@@ -20,6 +20,7 @@ book_tag_association_table = Table(
 
 class Genre(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True)
+
     books: Mapped[list["Book"]] = relationship(back_populates="genre", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
