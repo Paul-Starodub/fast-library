@@ -160,6 +160,10 @@ async def get_current_author(
 
 
 async def create_profile(profile_create: ProfileCreate, db: Annotated[AsyncSession, Depends(get_db)]) -> models.Profile:
+    stmt = select(models.Profile.id).where(models.Profile.author_id == profile_create.author_id)
+    existing_profile = await db.execute(stmt)
+    if existing_profile.scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Profile for this author already exists")
     profile = models.Profile(**profile_create.model_dump())
     db.add(profile)
     await db.commit()
