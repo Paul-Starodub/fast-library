@@ -4,6 +4,24 @@ from pydantic import BaseModel, Field, ConfigDict
 from src.authors.schemas import AuthorPublic
 
 
+class TagBase(BaseModel):
+    name: str
+
+
+class TagCreate(TagBase):
+    pass
+
+
+class TagUpdate(TagBase):
+    pass
+
+
+class Tag(TagBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class GenreBase(BaseModel):
     name: Annotated[str, Field(min_length=1, max_length=50)]
 
