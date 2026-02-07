@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 from src.authors import models
 from src.authors.schemas import AuthorCreate, AuthorUpdate, Token, ProfileCreate
@@ -169,3 +170,9 @@ async def create_profile(profile_create: ProfileCreate, db: Annotated[AsyncSessi
     await db.commit()
     await db.refresh(profile, attribute_names=["author"])
     return profile
+
+
+async def get_all_profiles(db: Annotated[AsyncSession, Depends(get_db)]) -> list[models.Profile]:
+    stmt = select(models.Profile).options(joinedload(models.Profile.author)).order_by(models.Profile.author_id)
+    profiles = await db.execute(stmt)
+    return list(profiles.scalars().all())

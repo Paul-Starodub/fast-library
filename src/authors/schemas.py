@@ -65,6 +65,6 @@ class ProfileUpdate(ProfileBase):
 
 class Profile(ProfileBase):
     id: int
-    author: AuthorPrivate
+    author: AuthorPublic
 
     model_config = ConfigDict(from_attributes=True)
