@@ -18,3 +18,8 @@ async def get_profiles(db: AsyncSession = Depends(get_db)):
 @router.post("/", response_model=Profile, status_code=status.HTTP_201_CREATED)
 async def add_profile(profile_create: ProfileCreate, db: Annotated[AsyncSession, Depends(get_db)]):
     return await crud.create_profile(db=db, profile_create=profile_create)
+
+
+@router.get("/{author_id}/", response_model=Profile)
+async def get_profile(author_id: int, db: AsyncSession = Depends(get_db)):
+    return await crud.get_current_profile_for_author(db=db, author_id=author_id)

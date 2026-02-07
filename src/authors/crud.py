@@ -176,3 +176,15 @@ async def get_all_profiles(db: Annotated[AsyncSession, Depends(get_db)]) -> list
     stmt = select(models.Profile).options(joinedload(models.Profile.author)).order_by(models.Profile.author_id)
     profiles = await db.execute(stmt)
     return list(profiles.scalars().all())
+
+
+async def get_current_profile_for_author(db: Annotated[AsyncSession, Depends(get_db)], author_id: int):
+    stmt = await db.execute(
+        select(models.Profile)
+        .where(models.Profile.author_id == author_id)
+        .options(joinedload(models.Profile.author))
+    )
+    profile = stmt.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    return profile
