@@ -137,7 +137,6 @@ async def get_current_author(
     token: Annotated[str, Depends(oauth2_scheme)], db: Annotated[AsyncSession, Depends(get_db)]
 ) -> models.Author:
     author_id = verify_access_token(token)
-    print(f"{author_id=}")
     authentication_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
