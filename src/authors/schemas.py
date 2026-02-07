@@ -56,7 +56,7 @@ class ProfileBase(BaseModel):
 
 
 class ProfileCreate(ProfileBase):
-    pass
+    author_id: int
 
 
 class ProfileUpdate(ProfileBase):
