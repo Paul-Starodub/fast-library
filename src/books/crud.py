@@ -140,6 +140,31 @@ class BookCRUD:
         await db.delete(book)
         await db.commit()
 
+    @staticmethod  # TODO: optimise
+    async def attach_tag_to_book(db: AsyncSession, book_id: int, tag_id: int) -> models.Book:
+        stmt = await db.execute(
+            select(models.Book)
+            .options(
+                selectinload(models.Book.genre),
+                selectinload(models.Book.author),
+                selectinload(models.Book.tags),
+            )
+            .where(models.Book.id == book_id)
+        )
+        book = stmt.scalars().first()
+        if not book:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+        stmt = await db.execute(select(models.Tag).where(models.Tag.id == tag_id))
+        tag = stmt.scalars().first()
+        if not tag:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tag not found")
+        if tag in book.tags:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Tag for this book already exists")
+        book.tags.append(tag)
+        await db.commit()
+        await db.refresh(book)
+        return book
+
 
 class TagCrud:
     @staticmethod

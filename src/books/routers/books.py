@@ -37,3 +37,8 @@ async def update_book_partial(
 @router.delete("/{book_id}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_book(db: Annotated[AsyncSession, Depends(get_db)], book_id: int):
     return await crud.crud_book.delete_book(db, book_id)
+
+
+@router.post("/{book_id}/attach_tag/", response_model=schemas.Book)
+async def attach_tag(db: Annotated[AsyncSession, Depends(get_db)], book_id: int, tag_id: int):
+    return await crud.crud_book.attach_tag_to_book(db=db, book_id=book_id, tag_id=tag_id)
