@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
 from src.authors import models
-from src.authors.schemas import AuthorCreate, AuthorUpdate, Token, ProfileCreate
+from src.authors.schemas import AuthorCreate, AuthorUpdate, Token, ProfileCreate, ProfileUpdate
 from src.authors.security import hash_password, oauth2_scheme, verify_access_token, verify_password, create_access_token
 from src.config import settings
 from src.dependencies import get_db
@@ -180,11 +180,33 @@ async def get_all_profiles(db: Annotated[AsyncSession, Depends(get_db)]) -> list
 
 async def get_profile_by_author_id(db: AsyncSession, author_id: int) -> models.Profile:
     stmt = await db.execute(
-        select(models.Profile)
-        .where(models.Profile.author_id == author_id)
-        .options(joinedload(models.Profile.author))
+        select(models.Profile).where(models.Profile.author_id == author_id).options(joinedload(models.Profile.author))
     )
     profile = stmt.scalar_one_or_none()
     if not profile:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
     return profile
+
+
+async def update_profile(profile_update: ProfileUpdate, profile_id: int, db: AsyncSession) -> models.Profile:
+    stmt = await db.execute(
+        select(models.Profile).where(models.Profile.id == profile_id).options(joinedload(models.Profile.author))
+    )
+    profile = stmt.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    update_data = profile_update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(profile, field, value)
+    await db.commit()
+    await db.refresh(profile)
+    return profile
+
+
+async def delete_profile_by_id(profile_id: int, db: AsyncSession) -> None:
+    stmt = await db.execute(select(models.Profile).where(models.Profile.id == profile_id))
+    profile = stmt.scalar_one_or_none()
+    if not profile:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+    await db.delete(profile)
+    await db.commit()
