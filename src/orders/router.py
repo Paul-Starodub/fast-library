@@ -1,6 +1,8 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.dependencies import get_db
 from src.orders import crud
 from src.orders.schemas import Order, OrderCreate
