@@ -39,6 +39,6 @@ async def delete_book(db: Annotated[AsyncSession, Depends(get_db)], book_id: int
     return await crud.crud_book.delete_book(db, book_id)
 
 
-@router.post("/{book_id}/attach_tag/", response_model=schemas.BookWithTags)
+@router.post("/{book_id}/attach_tag/", response_model=schemas.BookWithTags)  # TODO: method
 async def attach_tag(db: Annotated[AsyncSession, Depends(get_db)], book_id: int, tag_id: int):
     return await crud.crud_book.attach_tag_to_book(db=db, book_id=book_id, tag_id=tag_id)
