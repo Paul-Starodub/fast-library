@@ -20,7 +20,7 @@ class Author(Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     books: Mapped[list["Book"]] = relationship(back_populates="author", cascade="all, delete-orphan")
-    profile: Mapped["Profile"] = relationship(back_populates="author")
+    profile: Mapped["Profile"] = relationship(back_populates="author", cascade="all, delete-orphan")
     orders: Mapped[list["Order"]] = relationship(back_populates="author", cascade="all, delete-orphan")
 
     @property
