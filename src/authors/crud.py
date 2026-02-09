@@ -22,19 +22,13 @@ async def create_author(author: AuthorCreate, db: Annotated[AsyncSession, Depend
     )
     existing_author = result.scalar_one_or_none()
     if existing_author:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already exists")
     result = await db.execute(
         select(models.Author).where(func.lower(models.Author.email) == author.email.lower()),
     )
     existing_email = result.scalar_one_or_none()
     if existing_email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     new_author = models.Author(
         username=author.username,
         email=author.email.lower(),
@@ -63,10 +57,7 @@ async def update_author(db: AsyncSession, author_id: int, author_update: AuthorU
     result = await db.execute(select(models.Author).where(models.Author.id == author_id))
     author = result.scalar_one_or_none()
     if not author:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Author not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
     update_data = author_update.model_dump(exclude_unset=True)
     if "email" in update_data:
         result = await db.execute(
