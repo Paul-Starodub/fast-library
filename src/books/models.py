@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String, ForeignKey, func, Table, Column, Integer
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from src.mixins import UserRelationMixin
+from src.mixins import AuthorRelationMixin
 from src.models import Base
 
 if TYPE_CHECKING:
@@ -29,7 +29,7 @@ class Genre(Base):
 
 class Tag(Base):
     name: Mapped[str] = mapped_column(String(50), unique=True)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.now(timezone.utc))
 
     books: Mapped[list["Book"]] = relationship(secondary=book_tag_association_table, back_populates="tags")
 
@@ -37,8 +37,8 @@ class Tag(Base):
         return f"Tag(id={self.id}, name={self.name})"
 
 
-class Book(UserRelationMixin, Base):
-    _user_back_populate = "books"
+class Book(AuthorRelationMixin, Base):
+    _author_back_populate = "books"
     title: Mapped[str] = mapped_column(String(100), unique=True)
     rating: Mapped[int] = mapped_column(default=0)
     date_published: Mapped[datetime]
@@ -56,4 +56,4 @@ class Book(UserRelationMixin, Base):
         return "/static/book_pics/default.jpg"
 
     def __repr__(self) -> str:
-        return f"Book(id={self.id}, rating={self.rating}, date_published={self.date_published}"
+        return f"Book(id={self.id}, rating={self.rating}, date_published={self.date_published})"

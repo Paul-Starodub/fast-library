@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Integer, ForeignKey, func, UniqueConstraint
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 
-from src.mixins import UserRelationMixin
+from src.mixins import AuthorRelationMixin
 from src.models import Base
 
 if TYPE_CHECKING:
@@ -25,9 +25,9 @@ class BookOrder(Base):
     order: Mapped["Order"] = relationship(back_populates="books")
 
 
-class Order(UserRelationMixin, Base):
-    _user_back_populate = "orders"
-    ordered_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.utcnow)
+class Order(AuthorRelationMixin, Base):
+    _author_back_populate = "orders"
+    ordered_at: Mapped[datetime] = mapped_column(server_default=func.now(), default=datetime.now(timezone.utc))
 
     books: Mapped[list[BookOrder]] = relationship(back_populates="order", cascade="all, delete-orphan")
 
