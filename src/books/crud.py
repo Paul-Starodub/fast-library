@@ -115,16 +115,10 @@ class BookCRUD:
         update_data = book_update.model_dump(exclude_unset=partial)
         new_title = update_data.get("title")
         if new_title and new_title != book.title:
-            stmt = select(models.Book.id).where(
-                models.Book.title == new_title,
-                models.Book.id != book_id,
-            )
+            stmt = select(models.Book.id).where(models.Book.title == new_title, models.Book.id != book_id)
             result = await db.execute(stmt)
             if result.scalar_one_or_none():
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail="Book with this title already exists",
-                )
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Book with this title already exists")
         for field, value in update_data.items():
             setattr(book, field, value)
         await db.commit()
