@@ -2,8 +2,8 @@ from fastapi import HTTPException, status
 from sqlalchemy import select, Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
-
-from src import Order, Book
+from src.books.models import Book
+from src.orders.models import Order
 from src.orders.models import BookOrder
 from src.orders.schemas import OrderCreate
 
