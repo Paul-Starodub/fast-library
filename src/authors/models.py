@@ -1,10 +1,9 @@
 from typing import TYPE_CHECKING
 
-from pydantic import EmailStr
 from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.mixins import UserRelationMixin
+from src.mixins import AuthorRelationMixin
 from src.models import Base
 
 if TYPE_CHECKING:
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
 
 
 class Author(Base):
-    email: Mapped[EmailStr] = mapped_column(String(50), unique=True)
+    email: Mapped[str] = mapped_column(String(50), unique=True)
     username: Mapped[str] = mapped_column(String(50), unique=True)
     password_hash: Mapped[str] = mapped_column(String(200))
     image_file: Mapped[str | None] = mapped_column(String(200), nullable=True, default=None)
@@ -21,7 +20,7 @@ class Author(Base):
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     books: Mapped[list["Book"]] = relationship(back_populates="author", cascade="all, delete-orphan")
-    profile: Mapped["Profile"] = relationship(back_populates="author")
+    profile: Mapped["Profile"] = relationship(back_populates="author", cascade="all, delete-orphan")
     orders: Mapped[list["Order"]] = relationship(back_populates="author", cascade="all, delete-orphan")
 
     @property
@@ -34,9 +33,9 @@ class Author(Base):
         return f"Author(id={self.id}, username={self.username})"
 
 
-class Profile(UserRelationMixin, Base):
-    _user_id_unique = True  # for a one-to-one relationship
-    _user_back_populate = "profile"
+class Profile(AuthorRelationMixin, Base):
+    _author_id_unique = True  # for a one-to-one relationship
+    _author_back_populate = "profile"
     first_name: Mapped[str | None] = mapped_column(String(40))
     last_name: Mapped[str | None] = mapped_column(String(40))
     bio: Mapped[str | None]
