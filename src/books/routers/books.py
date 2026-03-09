@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, status, Depends, Form, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.books import crud, schemas
+from src.books.schemas import BookFormData
 from src.dependencies import get_db
 
 router = APIRouter(prefix="/books", tags=["books"])
@@ -20,22 +21,18 @@ async def get_book(db: Annotated[AsyncSession, Depends(get_db)], book_id: int):
 
 @router.post("/", response_model=schemas.Book, status_code=status.HTTP_201_CREATED)
 async def create_book(
-    genre_id: int = Form(...),
-    author_id: int = Form(...),
-    title: str = Form(...),
-    rating: int = Form(...),
-    date_published: datetime = Form(...),
+    data: BookFormData = Depends(BookFormData.as_form),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
 ):
     return await crud.crud_book.create_book(
         db=db,
         file=file,
-        genre_id=genre_id,
-        author_id=author_id,
-        title=title,
-        rating=rating,
-        date_published=date_published,
+        genre_id=data.genre_id,
+        author_id=data.author_id,
+        title=data.title,
+        rating=data.rating,
+        date_published=data.date_published,
     )
 
 

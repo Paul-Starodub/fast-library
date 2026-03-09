@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated, Optional
+from fastapi import Form
 from pydantic import BaseModel, Field, ConfigDict
 from src.authors.schemas import AuthorPublic
 
@@ -50,6 +51,31 @@ class BookBase(BaseModel):
 class BookCreate(BookBase):
     genre_id: Annotated[int, Field(ge=1)]
     author_id: Annotated[int, Field(ge=1)]
+
+
+class BookFormData(BaseModel):
+    genre_id: int
+    author_id: int
+    title: str
+    rating: int
+    date_published: datetime | None = None
+
+    @classmethod
+    def as_form(
+        cls,
+        genre_id: int = Form(...),
+        author_id: int = Form(...),
+        title: str = Form(...),
+        rating: int = Form(...),
+        date_published: datetime | None = Form(None),
+    ):
+        return cls(
+            genre_id=genre_id,
+            author_id=author_id,
+            title=title,
+            rating=rating,
+            date_published=date_published,
+        )
 
 
 class BookUpdate(BaseModel):
