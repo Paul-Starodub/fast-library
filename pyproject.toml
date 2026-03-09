@@ -15,7 +15,8 @@ dependencies = [
     "pyjwt[crypto] (>=2.11.0,<3.0.0)",
     "bcrypt (>=5.0.0,<6.0.0)",
     "python-multipart (>=0.0.22,<0.0.23)",
-    "pwdlib[argon2] (>=0.3.0,<0.4.0)"
+    "pwdlib[argon2] (>=0.3.0,<0.4.0)",
+    "pillow (>=12.1.1,<13.0.0)"
 ]
 
 

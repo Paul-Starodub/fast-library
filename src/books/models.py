@@ -1,9 +1,7 @@
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
-
 from sqlalchemy import String, ForeignKey, func, Table, Column, Integer
 from sqlalchemy.orm import mapped_column, Mapped, relationship
-
 from src.mixins import AuthorRelationMixin
 from src.models import Base
 
