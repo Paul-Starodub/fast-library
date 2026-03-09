@@ -1,10 +1,17 @@
-from fastapi import HTTPException, status
+from datetime import datetime
+from PIL import UnidentifiedImageError
+from fastapi import HTTPException, status, Form, UploadFile
+from fastapi.encoders import jsonable_encoder
+from pydantic import ValidationError
 from sqlalchemy import select, and_, insert, exists
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
+from starlette.concurrency import run_in_threadpool
 from src.books import models
 from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, BookUpdate, TagCreate, TagUpdate
+from src.config import settings
+from src.image_utils import process_profile_image
 
 
 class GenreCRUD:
@@ -92,11 +99,43 @@ class BookCRUD:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
     @staticmethod
-    async def create_book(db: AsyncSession, book_create: BookCreate) -> models.Book:
-        stmt = select(models.Book.id).where(models.Book.title == book_create.title)
+    async def create_book(
+        db: AsyncSession,
+        file: UploadFile,
+        genre_id: int,
+        author_id: int,
+        title: str,
+        rating: int,
+        date_published: datetime | None = None,
+    ) -> models.Book:
+        stmt = select(models.Book.id).where(models.Book.title == title)
         existing_book = await db.execute(stmt)
         if existing_book.scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Book with this title already exists")
+        content = await file.read()
+        if len(content) > settings.max_upload_size_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File too large. Maximum size is {settings.max_upload_size_bytes // (1024 * 1024)}MB",
+            )
+        try:
+            new_filename = await run_in_threadpool(process_profile_image, content)
+        except UnidentifiedImageError as err:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid image file. Please upload a valid image (JPEG, PNG, GIF, WebP).",
+            ) from err
+        try:
+            book_create = BookCreate(
+                genre_id=genre_id,
+                author_id=author_id,
+                title=title,
+                rating=rating,
+                date_published=date_published,
+                image_file=new_filename,
+            )
+        except ValidationError as exc:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=jsonable_encoder(exc.errors()))
         book = models.Book(**book_create.model_dump())
         db.add(book)
         await db.commit()
