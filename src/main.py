@@ -13,8 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 app = FastAPI()
-app.mount("/media", StaticFiles(directory=BASE_DIR / "media"), name="media")
-app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
+app.mount("/src/media", StaticFiles(directory=BASE_DIR / "src" / "media"), name="media")
+app.mount("/src/static", StaticFiles(directory=BASE_DIR / "src" / "static"), name="static")
 app.include_router(genres_router)
 app.include_router(books_router)
 app.include_router(orders_router)
