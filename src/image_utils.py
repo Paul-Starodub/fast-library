@@ -3,7 +3,7 @@ from io import BytesIO
 from pathlib import Path
 from PIL import Image, ImageOps
 
-PROFILE_PICS_DIR = Path("media/book_pics")
+PROFILE_PICS_DIR = Path("media/pics")
 
 
 def process_profile_image(content: bytes) -> str:
