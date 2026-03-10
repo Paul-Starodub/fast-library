@@ -189,7 +189,11 @@ class BookCRUD:
             setattr(book, field, value)
         if new_filename:
             book.image_file = new_filename
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid genre_id or author_id")
         await db.refresh(book, attribute_names=["genre", "author"])
         if old_filename:
             delete_profile_image(old_filename)
