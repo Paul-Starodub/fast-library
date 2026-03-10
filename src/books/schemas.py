@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Annotated, Optional
-from fastapi import Form
+
 from pydantic import BaseModel, Field, ConfigDict
+
 from src.authors.schemas import AuthorPublic
 
 
@@ -60,31 +61,13 @@ class BookFormData(BaseModel):
     rating: int
     date_published: datetime | None = None
 
-    @classmethod
-    def as_form(
-        cls,
-        genre_id: int = Form(...),
-        author_id: int = Form(...),
-        title: str = Form(...),
-        rating: int = Form(...),
-        date_published: datetime | None = Form(None),
-    ):
-        return cls(
-            genre_id=genre_id,
-            author_id=author_id,
-            title=title,
-            rating=rating,
-            date_published=date_published,
-        )
-
 
 class BookUpdate(BaseModel):
+    genre_id: int | None = Field(None, ge=1)
+    author_id: int | None = Field(None, ge=1)
     title: str | None = Field(None, min_length=1, max_length=100)
     rating: int | None = Field(None, ge=0, le=5)
     date_published: datetime | None = None
-    image_file: str | None = Field(None, min_length=1, max_length=200)
-    genre_id: int | None = Field(None, ge=1)
-    author_id: int | None = Field(None, ge=1)
 
 
 class Book(BookBase):

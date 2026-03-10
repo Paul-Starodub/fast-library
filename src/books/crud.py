@@ -1,6 +1,7 @@
 from datetime import datetime
+
 from PIL import UnidentifiedImageError
-from fastapi import HTTPException, status, Form, UploadFile
+from fastapi import HTTPException, status, UploadFile
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from sqlalchemy import select, and_, insert, exists
@@ -8,8 +9,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
 from starlette.concurrency import run_in_threadpool
+
 from src.books import models
-from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, BookUpdate, TagCreate, TagUpdate
+from src.books.schemas import GenreCreate, GenreUpdate, BookCreate, TagCreate, TagUpdate, BookUpdate
 from src.config import settings
 from src.image_utils import process_profile_image, delete_profile_image
 
@@ -146,50 +148,47 @@ class BookCRUD:
     async def update_book(
         book_id: int,
         db: AsyncSession,
-        file: UploadFile,
-        genre_id: int,
-        author_id: int,
-        title: str,
-        rating: int,
-        date_published: datetime | None = None,
+        file: UploadFile | None = None,
         partial: bool = False,
+        **data,
     ) -> models.Book:
         stmt = select(models.Book).where(models.Book.id == book_id)
         result = await db.execute(stmt)
         book = result.scalar_one_or_none()
         if not book:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
-        content = await file.read()
-        if len(content) > settings.max_upload_size_bytes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File too large. Maximum size is {settings.max_upload_size_bytes // (1024 * 1024)}MB",
-            )
-        try:
-            new_filename = await run_in_threadpool(process_profile_image, content)
-        except UnidentifiedImageError as err:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid image file. Please upload a valid image (JPEG, PNG, GIF, WebP).",
-            ) from err
-        old_filename = book.image_file
-        book_update = BookUpdate(
-            genre_id=genre_id,
-            author_id=author_id,
-            title=title,
-            rating=rating,
-            date_published=date_published,
-            image_file=new_filename,
-        )
-        update_data = book_update.model_dump(exclude_unset=partial)
+        old_filename = None
+        new_filename = None
+        if file:
+            content = await file.read()
+            if len(content) > settings.max_upload_size_bytes:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"File too large. Maximum size is {settings.max_upload_size_bytes // (1024 * 1024)}MB",
+                )
+            try:
+                new_filename = await run_in_threadpool(process_profile_image, content)
+                old_filename = book.image_file
+            except UnidentifiedImageError as err:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid image file. Please upload a valid image (JPEG, PNG, GIF, WebP).",
+                ) from err
+        book_update = BookUpdate(**data)
+        update_data = book_update.model_dump(exclude_unset=partial, exclude_none=True)
         new_title = update_data.get("title")
         if new_title and new_title != book.title:
-            stmt = select(models.Book.id).where(models.Book.title == new_title, models.Book.id != book_id)
+            stmt = select(models.Book.id).where(
+                models.Book.title == new_title,
+                models.Book.id != book_id,
+            )
             result = await db.execute(stmt)
             if result.scalar_one_or_none():
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Book with this title already exists")
         for field, value in update_data.items():
             setattr(book, field, value)
+        if new_filename:
+            book.image_file = new_filename
         await db.commit()
         await db.refresh(book, attribute_names=["genre", "author"])
         if old_filename:
