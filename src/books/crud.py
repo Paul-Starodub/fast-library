@@ -103,7 +103,7 @@ class BookCRUD:
     @staticmethod
     async def create_book(
         db: AsyncSession,
-        file: UploadFile,
+        file: UploadFile | None,
         genre_id: int,
         author_id: int,
         title: str,
@@ -114,19 +114,21 @@ class BookCRUD:
         existing_book = await db.execute(stmt)
         if existing_book.scalar_one_or_none():
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Book with this title already exists")
-        content = await file.read()
-        if len(content) > settings.max_upload_size_bytes:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"File too large. Maximum size is {settings.max_upload_size_bytes // (1024 * 1024)}MB",
-            )
-        try:
-            new_filename = await run_in_threadpool(process_profile_image, content)
-        except UnidentifiedImageError as err:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid image file. Please upload a valid image (JPEG, PNG, GIF, WebP).",
-            ) from err
+        new_filename = None
+        if file:
+            content = await file.read()
+            if len(content) > settings.max_upload_size_bytes:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"File too large. Maximum size is {settings.max_upload_size_bytes // (1024 * 1024)}MB",
+                )
+            try:
+                new_filename = await run_in_threadpool(process_profile_image, content)
+            except UnidentifiedImageError as err:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid image file. Please upload a valid image (JPEG, PNG, GIF, WebP).",
+                ) from err
         try:
             book_create = BookCreate(
                 genre_id=genre_id,
@@ -136,9 +138,13 @@ class BookCRUD:
                 date_published=date_published,
             )
         except ValidationError as exc:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=jsonable_encoder(exc.errors()))
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=jsonable_encoder(exc.errors()),
+            )
         book = models.Book(**book_create.model_dump())
-        book.image_file = new_filename
+        if new_filename:
+            book.image_file = new_filename
         db.add(book)
         await db.commit()
         await db.refresh(book, attribute_names=["genre", "author"])

@@ -24,7 +24,7 @@ async def get_book(db: Annotated[AsyncSession, Depends(get_db)], book_id: int):
 @router.post("/", response_model=schemas.Book, status_code=status.HTTP_201_CREATED)
 async def create_book(
     data: BookFormData = Depends(book_form_data),
-    file: UploadFile = File(...),
+    file: UploadFile | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     return await crud.crud_book.create_book(db=db, file=file, **data.model_dump())
