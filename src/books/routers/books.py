@@ -21,60 +21,13 @@ async def get_book(db: Annotated[AsyncSession, Depends(get_db)], book_id: int):
     return await crud.crud_book.get_book(db, book_id)
 
 
-@router.post("/")
+@router.post("/", response_model=schemas.Book, status_code=status.HTTP_201_CREATED)
 async def create_book(
     data: BookFormData = Depends(book_form_data),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
 ):
     return await crud.crud_book.create_book(db=db, file=file, **data.model_dump())
-
-
-# @router.put("/{book_id}/", response_model=schemas.Book, status_code=status.HTTP_200_OK)
-# async def update_book(
-#     db: Annotated[AsyncSession, Depends(get_db)],
-#     book_id: int,
-#     genre_id: int = Form(...),
-#     author_id: int = Form(...),
-#     title: str = Form(...),
-#     rating: int = Form(...),
-#     date_published: datetime = Form(...),
-#     file: UploadFile = File(...),
-# ):
-#     return await crud.crud_book.update_book(
-#         db=db,
-#         file=file,
-#         genre_id=genre_id,
-#         author_id=author_id,
-#         title=title,
-#         rating=rating,
-#         date_published=date_published,
-#         book_id=book_id,
-#     )
-#
-#
-# @router.patch("/{book_id}/", response_model=schemas.Book, status_code=status.HTTP_200_OK)
-# async def update_book_partial(
-#     db: Annotated[AsyncSession, Depends(get_db)],
-#     book_id: int,
-#     genre_id: int = Form(...),
-#     author_id: int = Form(...),
-#     title: str = Form(...),
-#     rating: int = Form(...),
-#     date_published: datetime = Form(...),
-#     file: UploadFile = File(...),
-# ):
-#     return await crud.crud_book.update_book(
-#         db=db,
-#         file=file,
-#         genre_id=genre_id,
-#         author_id=author_id,
-#         title=title,
-#         rating=rating,
-#         date_published=date_published,
-#         book_id=book_id,
-#         partial=True,
-#     )
 
 
 @router.put("/{book_id}/", response_model=schemas.Book)

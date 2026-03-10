@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import Form
 
-from src.books.schemas import BookFormData, BookUpdate
+from src.books.schemas import BookUpdate, BookCreate
 
 
 async def book_form_data(
@@ -12,8 +12,8 @@ async def book_form_data(
     title: Annotated[str, Form()],
     rating: Annotated[int, Form()],
     date_published: Annotated[datetime | None, Form()] = None,
-) -> BookFormData:
-    return BookFormData(
+) -> BookCreate:
+    return BookCreate(
         genre_id=genre_id,
         author_id=author_id,
         title=title,

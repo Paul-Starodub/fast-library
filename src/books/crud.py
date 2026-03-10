@@ -134,11 +134,11 @@ class BookCRUD:
                 title=title,
                 rating=rating,
                 date_published=date_published,
-                image_file=new_filename,
             )
         except ValidationError as exc:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=jsonable_encoder(exc.errors()))
         book = models.Book(**book_create.model_dump())
+        book.image_file = new_filename
         db.add(book)
         await db.commit()
         await db.refresh(book, attribute_names=["genre", "author"])

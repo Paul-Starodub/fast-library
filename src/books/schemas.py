@@ -46,7 +46,6 @@ class BookBase(BaseModel):
     title: Annotated[str, Field(min_length=1, max_length=100)]
     rating: Annotated[int, Field(ge=0, le=5)]
     date_published: Optional[datetime]
-    image_file: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class BookCreate(BookBase):
@@ -73,6 +72,7 @@ class BookUpdate(BaseModel):
 class Book(BookBase):
     id: int
     image_path: str
+    image_file: str | None = Field(default=None, min_length=1, max_length=200)
     genre: Genre | None
     author: AuthorPublic | None
 
